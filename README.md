@@ -8,7 +8,7 @@ Just create `demo.ini` and write settings in it
 ;; DB host, for example: localhost, 127.0.0.1, sample.com
 host=localhost
 ;; DB name. For TSQLConnection.DatabaseName
-name=C:\Users\mail\Downloads\olbia20190731\olbia20190731.fdb
+name=C:\Users\user\Some_DB.fdb
 user=sysdba
 password=masterkey
 ```
