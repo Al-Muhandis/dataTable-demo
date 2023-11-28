@@ -14,5 +14,5 @@ password=masterkey
 ```
 
 # Frontend
-The template is used as a frontend framework sb-admin. It can be used for that any other
-https://github.com/startbootstrap/startbootstrap-sb-admin/archive/gh-pages.zip
+The template is used as a frontend framework `sb-admin` https://github.com/startbootstrap/startbootstrap-sb-admin/ 
+ It can be used for that any other
