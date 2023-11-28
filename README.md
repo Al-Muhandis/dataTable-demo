@@ -12,3 +12,7 @@ name=C:\Users\user\Some_DB.fdb
 user=sysdba
 password=masterkey
 ```
+
+# Frontend
+The template is used as a frontend framework sb-admin. It can be used for that any other
+https://github.com/startbootstrap/startbootstrap-sb-admin/archive/gh-pages.zip
