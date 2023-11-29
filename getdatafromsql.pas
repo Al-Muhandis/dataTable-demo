@@ -52,6 +52,7 @@ var
   begin
     Result:='<td>'+aSQLQuery.FieldByName(aField).AsString+'</td>'+LineEnding;
   end;
+   { Read table params from INI file }
   function ReadColName(aIndex: Integer): String;
   begin
     Result:=aIni.ReadString('Table', 'Col'+aIndex.ToString, EmptyStr);
@@ -64,6 +65,7 @@ var
   begin
     Result:=aIni.ReadString('Table', 'Name', EmptyStr);
   end;
+  { Building an SQL query for the query and Open }
   function OpenQuery: String;
   var
     i: Integer;
@@ -84,6 +86,7 @@ begin
   aSQLQuery := TSQLQuery.Create(nil);
   try
     OpenQuery;
+    { Build table header and footer (HTML syntax) }
     Result:='<thead>'+LineEnding+'<tr>'+LineEnding;
     for i:=0 to ReadColCount-1 do
       Result+='<th>'+ReadColName(i)+'</th>'+LineEnding;
@@ -92,8 +95,8 @@ begin
     for i:=0 to ReadColCount-1 do
       Result+='<th>'+ReadColName(i)+'</th>'+LineEnding;
     Result+='</tr>'+LineEnding+'</tfoot>'+LineEnding;
-    Result+='<tbody>'+LineEnding;
-    aTableBody:=EmptyStr;
+    { Build table body }
+    aTableBody:='<tbody>'+LineEnding;
     { Each iteration is a separate record in the database and a row in the table }
     while not aSQLQuery.EOF do
     begin
