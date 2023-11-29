@@ -23,8 +23,6 @@ uses
 var
   _Connection : TIBConnection;
   _Transaction: TSQLTransaction;
-  _Query: TSQLQuery;
-
 
 function CreateConnection: TIBConnection;
 var
@@ -42,48 +40,86 @@ begin
   end;
 end;
 
+
 function GetDataFromSQLTable: String;
 var
-  aRows: String;
+  aTableBody: String;
+  aIni: TMemIniFile;
+  i: Integer;
+  aSQLQuery: TSQLQuery;
                    { Creating the contents of a specific cell }
   function GetFieldForTableCell(const aField: String): String;
   begin
-    Result:='<td>'+_Query.FieldByName(aField).AsString+'</td>'+LineEnding;
+    Result:='<td>'+aSQLQuery.FieldByName(aField).AsString+'</td>'+LineEnding;
   end;
-
-begin
-  _Query.Open;
-  aRows:=EmptyStr;
-  _Query.First;
-  { Each iteration is a separate record in the database and a row in the table }
-  while not _Query.EOF do
+  function ReadColName(aIndex: Integer): String;
   begin
-    aRows+='<tr>'+LineEnding;
-    aRows+=GetFieldForTableCell('ID_EMP');
-    aRows+=GetFieldForTableCell('NAME');  
-    aRows+=GetFieldForTableCell('SEX');
-    aRows+=GetFieldForTableCell('BIRTH');  
-    aRows+=GetFieldForTableCell('CITY');  
-    aRows+=GetFieldForTableCell('NAME1');
-    aRows+='</tr>'+LineEnding;
-    _Query.Next;
+    Result:=aIni.ReadString('Table', 'Col'+aIndex.ToString, EmptyStr);
   end;
-  Result:=aRows;
-end;
+  function ReadColCount: Integer;
+  begin
+    Result:=aIni.ReadInteger('Table', 'ColCount', 0);
+  end;
+  function ReadTableName: String;
+  begin
+    Result:=aIni.ReadString('Table', 'Name', EmptyStr);
+  end;
+  function OpenQuery: String;
+  var
+    i: Integer;
+  begin
+    aSQLQuery.Database := _Connection;
+    Result:='select ';
+    for i:=0 to ReadColCount-1 do
+      Result+=' '+ReadColName(i)+', ';
+    SetLength(Result, Length(Result)-Length(', '));
+    Result+=' from '+ReadTableName;
+    aSQLQuery.SQL.Text := Result;
+    aSQLQuery.Open;
+    aSQLQuery.First;
+  end;
 
+begin                                        
+  aIni:=TMemIniFile.Create(ChangeFileExt(ApplicationName, '.ini'));  
+  aSQLQuery := TSQLQuery.Create(nil);
+  try
+    OpenQuery;
+    Result:='<thead>'+LineEnding+'<tr>'+LineEnding;
+    for i:=0 to ReadColCount-1 do
+      Result+='<th>'+ReadColName(i)+'</th>'+LineEnding;
+    Result+='</tr>'+LineEnding+'</thead>'+LineEnding;
+    Result+='<tfoot>'+LineEnding+'<tr>'+LineEnding;
+    for i:=0 to ReadColCount-1 do
+      Result+='<th>'+ReadColName(i)+'</th>'+LineEnding;
+    Result+='</tr>'+LineEnding+'</tfoot>'+LineEnding;
+    Result+='<tbody>'+LineEnding;
+    aTableBody:=EmptyStr;
+    { Each iteration is a separate record in the database and a row in the table }
+    while not aSQLQuery.EOF do
+    begin
+      aTableBody+='<tr>'+LineEnding;
+      for i:=0 to ReadColCount-1 do
+        aTableBody+=GetFieldForTableCell(ReadColName(i));
+      aTableBody+='</tr>'+LineEnding;
+      aSQLQuery.Next;
+    end;
+    aTableBody+='</tbody>'+LineEnding;
+  finally
+    aSQLQuery.Close;
+    aSQLQuery.Free;
+    aIni.Free;
+  end;
+  Result+=aTableBody;
+end;
 
 initialization
   _Connection := CreateConnection;
   _Transaction:=TSQLTransaction.Create(nil);
   _Connection.Transaction:=_Transaction;
-  _Query := TSQLQuery.Create(nil);
-  _Query.SQL.Text := 'select ID_EMP, NAME, SEX, BIRTH, CITY, NAME1 from TB_EMP';
-  _Query.Database := _Connection;
+  _Connection.Open;
 
 finalization
-  _Query.Close;
   _Connection.Close;
-  _Query.Free;
   _Transaction.Free;
   _Connection.Free;
 
