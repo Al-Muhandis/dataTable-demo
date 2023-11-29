@@ -11,6 +11,16 @@ host=localhost
 name=C:\Users\user\Some_DB.fdb
 user=sysdba
 password=masterkey
+
+[Table]
+Name=TABLE_NAME
+col0=COL_0
+col1=COL_1
+col2=COL_2
+col3=COL_3
+col4=COL_4
+col5=COL_5
+ColCount=6
 ```
 
 # Frontend
