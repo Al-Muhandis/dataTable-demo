@@ -17,7 +17,8 @@ uses
 { TEmptyTableProducer }
 
 procedure RouteDataTableWithAjaxPage({%H-}ARequest: TRequest; AResponse: TResponse);
-begin                { HTML template file. Create HTML page without table rows }
+begin
+  { HTML template file. Create HTML page without table rows }
   AResponse.Content:=BuildHTMLTable('tpl_with-ajax.html', False); // False - without table body. Ajax will do it
 end;
 

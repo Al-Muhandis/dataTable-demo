@@ -12,7 +12,6 @@ uses
   Classes, SysUtils, SQLDB, cmn
   ;
 
-{ for ajax data retrieving we need only table header in HTML }
 function GetDataFromSQLTable(aWithBody: Boolean = True): String;
 function CreateSQLQuery(aLength, aStart: Integer; aOrderDir: TOrderDir = odNone; aOrderCol: Integer = 0;
   aSearchValue: String = ''): TSQLQuery;
@@ -52,6 +51,8 @@ function ReadTableName: String;
 begin
   Result:=_Ini.ReadString('Table', 'Name', EmptyStr);
 end;
+
+{ Read column inndex for searching if the search value is presented }
 function ReadSearchCol: Integer;
 begin
   Result:=_Ini.ReadInteger('Table', 'SearchCol', 0);
@@ -91,6 +92,7 @@ begin
   aQuery.First;
 end;
 
+{ for ajax data retrieving we need only table header in HTML }
 function GetDataFromSQLTable(aWithBody: Boolean): String;
 var
   aTableBody: String;
@@ -141,6 +143,7 @@ begin
   Result+=aTableBody;
 end;
 
+{ THis function creates and open the dataset query by SQL }
 function CreateSQLQuery(aLength, aStart: Integer; aOrderDir: TOrderDir; aOrderCol: Integer; aSearchValue: String
   ): TSQLQuery;
 begin
@@ -148,7 +151,8 @@ begin
   OpenQuery(Result, aLength, aStart, aOrderDir, aOrderCol, aSearchValue);
 end;
 
-initialization                
+initialization
+  { We can do it globally because the server is not threaded }
   _Ini:=TMemIniFile.Create(ChangeFileExt(ApplicationName, '.ini'));
   _Connection := CreateConnection;
   _Transaction:=TSQLTransaction.Create(nil);

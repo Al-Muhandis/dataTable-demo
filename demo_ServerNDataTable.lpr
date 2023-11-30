@@ -16,7 +16,8 @@ begin
   Application.Threaded:=False;
   Application.Initialize;
   { This is optional. Just automatically launches by the URL you need }
-  OpenURL('http://127.0.0.1:8081/tables.html');
+  OpenURL('http://127.0.0.1:8081/tables.html');         
+  { second URL with dynamic data load }
   OpenURL('http://127.0.0.1:8081/table-ajax.html');
   Application.Run;
 end.

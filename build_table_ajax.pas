@@ -33,7 +33,7 @@ uses
   ;
 
 { TAjaxProducer }
-
+{ Procedures for processing the relevant request }
 class procedure TAjaxProducer.RouteDataTablePage(aRequest: TRequest; aResponse: TResponse);
 var
   aAjaxProducer: TAjaxProducer;
@@ -47,6 +47,8 @@ begin
   end;
 end;
 
+ { build JSON response for ajax request with certain structure
+    https://datatables.net/manual/server-side }
 procedure TAjaxProducer.BuildResponse(aResponse: TResponse);
 var
   aJSON: TJSONObject;
@@ -63,6 +65,9 @@ begin
       aData:=TJSONArray.Create();
       aJSON.Add('data', aData);
       l:=0;
+      {  Why, in addition to aSQLQuery.EOF, do I control the loop to the maximum of the package?
+        The fact is that I specifically create one more record to determine if there are more pages to request
+        I guess you can come up with other mechanisms, but I did it. }
       while (not aSQLQuery.EOF) and (l<>FLength) do
       begin
         aRecord:=TJSONArray.Create;
@@ -72,7 +77,7 @@ begin
         aSQLQuery.Next; 
         Inc(l);
       end;
-      if not aSQLQuery.EOF then
+      if not aSQLQuery.EOF then   // if this then record count is more than in the json data array of records
         Inc(l);
       aJSON.Add('recordsTotal', l+FStart); // You can specify total records oof the data if it is known
       aJSON.Add('recordsFiltered', l+FStart);
@@ -89,6 +94,9 @@ procedure TAjaxProducer.ParseRequest(aRequest: TRequest);
 var
   aDir: String;
 begin
+  { Ajax passes the request parameters via GET parameters of the URI
+    ( like sample.com/sampleuri ?getparameter1=value1&getparameter2 etc)
+    http://127.0.0.1/ajax.json?draw=1&length=10&... etc }
   FDraw:=StrToIntDef(aRequest.QueryFields.Values['draw'], 0);
   FLength:=StrToIntDef(aRequest.QueryFields.Values['length'], 0);
   FSearchValue:=aRequest.QueryFields.Values['search[value]'];
@@ -104,6 +112,7 @@ begin
 end;
 
 initialization
+  { register address for a url routing }
   httprouter.RegisterRoute('/ajax.json/', @TAjaxProducer.RouteDataTablePage);
 
 end.
