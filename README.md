@@ -21,6 +21,7 @@ col3=COL_3
 col4=COL_4
 col5=COL_5
 ColCount=6
+SearchCol=1
 ```
 
 # Frontend
