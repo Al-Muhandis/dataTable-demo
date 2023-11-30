@@ -14,7 +14,7 @@ uses
 
 { for ajax data retrieving we need only table header in HTML }
 function GetDataFromSQLTable(aWithBody: Boolean = True): String;
-function CreateSQLQuery(aStart, aLength: Integer; aOrderDir: TOrderDir = odNone; aOrderCol: Integer = 0;
+function CreateSQLQuery(aLength, aStart: Integer; aOrderDir: TOrderDir = odNone; aOrderCol: Integer = 0;
   aSearchValue: String = ''): TSQLQuery;
 function ReadColCount: Integer;
 
@@ -64,7 +64,7 @@ var
 begin
   Result:='select ';
   if aLength<>0 then
-    Result+='first '+aLength.ToString+' ';
+    Result+='first '+(aLength+2).ToString+' ';
   if aStart<>0 then
     Result+='skip '+aStart.ToString+' ';
   aCount:=ReadColCount;
@@ -86,7 +86,7 @@ procedure OpenQuery(aQuery: TSQLQuery; aLength: Integer = 0; aStart:  Integer = 
   aOrderCol: Integer = 0; aSearchValue: String = '');
 begin
   aQuery.Database := _Connection;
-  aQuery.SQL.Text := BuildQuery(aStart, aLength, aOrderDir, aOrderCol, aSearchValue);
+  aQuery.SQL.Text := BuildQuery(aLength, aStart, aOrderDir, aOrderCol, aSearchValue);
   aQuery.Open;
   aQuery.First;
 end;
@@ -141,11 +141,11 @@ begin
   Result+=aTableBody;
 end;
 
-function CreateSQLQuery(aStart, aLength: Integer; aOrderDir: TOrderDir; aOrderCol: Integer; aSearchValue: String
+function CreateSQLQuery(aLength, aStart: Integer; aOrderDir: TOrderDir; aOrderCol: Integer; aSearchValue: String
   ): TSQLQuery;
 begin
   Result := TSQLQuery.Create(nil);
-  OpenQuery(Result, aStart, aLength, aOrderDir, aOrderCol, aSearchValue);
+  OpenQuery(Result, aLength, aStart, aOrderDir, aOrderCol, aSearchValue);
 end;
 
 initialization                

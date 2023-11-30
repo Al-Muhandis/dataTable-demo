@@ -52,26 +52,30 @@ var
   aJSON: TJSONObject;
   aData, aRecord: TJSONArray;
   aSQLQuery: TSQLQuery;
-  i: Integer;
+  i, l: Integer;
 begin
   AResponse.ContentType:='application/json';
   aJSON:=TJSONObject.Create();
   try
     aJSON.Add('draw', FDraw);
-    aSQLQuery:=CreateSQLQuery(FStart, FLength, FOrderDir, FOrderColumn, FSearchValue);
+    aSQLQuery:=CreateSQLQuery(FLength, FStart, FOrderDir, FOrderColumn, FSearchValue);
     try
-      aJSON.Add('recordsTotal', 0); // You can specify total records oof the data if it is known
-      aJSON.Add('recordsFiltered', aSQLQuery.RecordCount);
       aData:=TJSONArray.Create();
       aJSON.Add('data', aData);
-      while not aSQLQuery.EOF do
+      l:=0;
+      while (not aSQLQuery.EOF) and (l<>FLength) do
       begin
         aRecord:=TJSONArray.Create;
         for i:=0 to ReadColCount-1 do
           aRecord.Add(aSQLQuery.Fields[i].AsString);
         aData.Add(aRecord);
-        aSQLQuery.Next;
+        aSQLQuery.Next; 
+        Inc(l);
       end;
+      if not aSQLQuery.EOF then
+        Inc(l);
+      aJSON.Add('recordsTotal', l+FStart); // You can specify total records oof the data if it is known
+      aJSON.Add('recordsFiltered', l+FStart);
     finally
       aSQLQuery.Free;
     end;
