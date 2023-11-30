@@ -10,6 +10,10 @@
         <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
         <link href="css/styles.css" rel="stylesheet" />
         <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+			
+		<!-- Page level plugin CSS-->
+		<link href="/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">   
+        
     </head>
     <body class="sb-nav-fixed">
         <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
@@ -128,9 +132,11 @@
                                 DataTable Example
                             </div>
                             <div class="card-body">
-                                <table id="datatablesSimple">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="datatablesSimple" width="100%" cellspacing="0">                                                        
                                         %%TABLE%%
-                                </table>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -149,9 +155,21 @@
                 </footer>
             </div>
         </div>
+        
+	     <!-- Bootstrap core JavaScript-->
+	    <script src="/vendor/jquery/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <script src="js/scripts.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
-        <script src="js/datatables-simple-demo.js"></script>
+         
+	
+	    <!-- Core plugin JavaScript-->
+	    <script src="/vendor/jquery-easing/jquery.easing.min.js"></script>
+	
+	    <!-- Page level plugin JavaScript-->
+	    <script src="/vendor/chart.js/Chart.min.js"></script>
+	    <script src="/vendor/datatables/jquery.dataTables.js"></script>
+	    <script src="/vendor/datatables/dataTables.bootstrap4.js"></script>
+	              
+        <script src="/js/scripts.js"></script>
+        <script src="/js/datatables-ajax.js"></script>    
     </body>
 </html>

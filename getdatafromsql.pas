@@ -9,10 +9,14 @@ unit getdatafromsql;
 interface
 
 uses
-  Classes, SysUtils, SQLDB
+  Classes, SysUtils, SQLDB, cmn
   ;
 
-function GetDataFromSQLTable: String;
+{ for ajax data retrieving we need only table header in HTML }
+function GetDataFromSQLTable(aWithBody: Boolean = True): String;
+function CreateSQLQuery(aStart, aLength: Integer; aOrderDir: TOrderDir = odNone; aOrderCol: Integer = 0;
+  aSearchValue: String = ''): TSQLQuery;
+function ReadColCount: Integer;
 
 implementation
 
@@ -23,69 +27,88 @@ uses
 var
   _Connection : TIBConnection;
   _Transaction: TSQLTransaction;
+  _Ini: TMemIniFile;
 
 function CreateConnection: TIBConnection;
-var
-  aIni: TMemIniFile;
 begin
   result := TIBConnection.Create(nil);
-  aIni:=TMemIniFile.Create(ChangeFileExt(ApplicationName, '.ini'));
-  try                                   { This I think you understand even better than me ;) }
-    result.Hostname :=      aIni.ReadString('DB', 'Host', 'localhost');
-    result.DatabaseName :=  aIni.ReadString('DB', 'Name', EmptyStr);
-    result.UserName :=      aIni.ReadString('DB', 'User', 'sysdba');
-    result.Password :=      aIni.ReadString('DB', 'Password', 'masterkey');
-  finally                          
-    aIni.Free;
-  end;
+                                 { This I think you understand even better than me ;) }
+  result.Hostname :=      _Ini.ReadString('DB', 'Host', 'localhost');
+  result.DatabaseName :=  _Ini.ReadString('DB', 'Name', EmptyStr);
+  result.UserName :=      _Ini.ReadString('DB', 'User', 'sysdba');
+  result.Password :=      _Ini.ReadString('DB', 'Password', 'masterkey');
 end;
 
+{ Read table params from INI file }
+function ReadColName(aIndex: Integer): String;
+begin
+  Result:=_Ini.ReadString('Table', 'Col'+aIndex.ToString, EmptyStr);
+end;
+function ReadColCount: Integer;
+begin
+  Result:=_Ini.ReadInteger('Table', 'ColCount', 0);
+end;
+function ReadTableName: String;
+begin
+  Result:=_Ini.ReadString('Table', 'Name', EmptyStr);
+end;
+function ReadSearchCol: Integer;
+begin
+  Result:=_Ini.ReadInteger('Table', 'SearchCol', 0);
+end;
 
-function GetDataFromSQLTable: String;
+function BuildQuery(aLength: Integer = 0; aStart: Integer = 0; aOrderDir: TOrderDir = odNone;
+  aOrderCol: Integer = 0; aSearchValue: String = ''): String;
+var
+  i, aCount: Integer;
+begin
+  Result:='select ';
+  if aLength<>0 then
+    Result+='first '+aLength.ToString+' ';
+  if aStart<>0 then
+    Result+='skip '+aStart.ToString+' ';
+  aCount:=ReadColCount;
+  for i:=0 to aCount-1 do
+    Result+=' '+ReadColName(i)+', ';
+  if aCount>0 then
+    SetLength(Result, Length(Result)-Length(', '));
+  Result+=' from '+ReadTableName;
+  if not aSearchValue.IsEmpty then
+  begin
+    Result+=' where '+ReadColName(ReadSearchCol)+' like ''%'+aSearchValue+'%''';
+  end;
+  if aOrderDir<>odNone then
+    Result+=' order by '+ReadColName(aOrderCol)+' '+OrderToStr(aOrderDir);
+end;
+
+{ Building an SQL query for the query and Open }
+procedure OpenQuery(aQuery: TSQLQuery; aLength: Integer = 0; aStart:  Integer = 0; aOrderDir: TOrderDir = odNone;
+  aOrderCol: Integer = 0; aSearchValue: String = '');
+begin
+  aQuery.Database := _Connection;
+  aQuery.SQL.Text := BuildQuery(aStart, aLength, aOrderDir, aOrderCol, aSearchValue);
+  aQuery.Open;
+  aQuery.First;
+end;
+
+function GetDataFromSQLTable(aWithBody: Boolean): String;
 var
   aTableBody: String;
   aIni: TMemIniFile;
   i: Integer;
   aSQLQuery: TSQLQuery;
-                   { Creating the contents of a specific cell }
+
+  { Creating the contents of a specific cell }
   function GetFieldForTableCell(const aField: String): String;
   begin
     Result:='<td>'+aSQLQuery.FieldByName(aField).AsString+'</td>'+LineEnding;
-  end;
-   { Read table params from INI file }
-  function ReadColName(aIndex: Integer): String;
-  begin
-    Result:=aIni.ReadString('Table', 'Col'+aIndex.ToString, EmptyStr);
-  end;
-  function ReadColCount: Integer;
-  begin
-    Result:=aIni.ReadInteger('Table', 'ColCount', 0);
-  end;
-  function ReadTableName: String;
-  begin
-    Result:=aIni.ReadString('Table', 'Name', EmptyStr);
-  end;
-  { Building an SQL query for the query and Open }
-  function OpenQuery: String;
-  var
-    i: Integer;
-  begin
-    aSQLQuery.Database := _Connection;
-    Result:='select ';
-    for i:=0 to ReadColCount-1 do
-      Result+=' '+ReadColName(i)+', ';
-    SetLength(Result, Length(Result)-Length(', '));
-    Result+=' from '+ReadTableName;
-    aSQLQuery.SQL.Text := Result;
-    aSQLQuery.Open;
-    aSQLQuery.First;
   end;
 
 begin                                        
   aIni:=TMemIniFile.Create(ChangeFileExt(ApplicationName, '.ini'));  
   aSQLQuery := TSQLQuery.Create(nil);
   try
-    OpenQuery;
+    OpenQuery(aSQLQuery);
     { Build table header and footer (HTML syntax) }
     Result:='<thead>'+LineEnding+'<tr>'+LineEnding;
     for i:=0 to ReadColCount-1 do
@@ -96,17 +119,20 @@ begin
       Result+='<th>'+ReadColName(i)+'</th>'+LineEnding;
     Result+='</tr>'+LineEnding+'</tfoot>'+LineEnding;
     { Build table body }
-    aTableBody:='<tbody>'+LineEnding;
-    { Each iteration is a separate record in the database and a row in the table }
-    while not aSQLQuery.EOF do
+    if aWithBody then
     begin
-      aTableBody+='<tr>'+LineEnding;
-      for i:=0 to ReadColCount-1 do
-        aTableBody+=GetFieldForTableCell(ReadColName(i));
-      aTableBody+='</tr>'+LineEnding;
-      aSQLQuery.Next;
+      aTableBody:='<tbody>'+LineEnding;
+      { Each iteration is a separate record in the database and a row in the table }
+      while not aSQLQuery.EOF do
+      begin
+        aTableBody+='<tr>'+LineEnding;
+        for i:=0 to ReadColCount-1 do
+          aTableBody+=GetFieldForTableCell(ReadColName(i));
+        aTableBody+='</tr>'+LineEnding;
+        aSQLQuery.Next;
+      end;
+      aTableBody+='</tbody>'+LineEnding;
     end;
-    aTableBody+='</tbody>'+LineEnding;
   finally
     aSQLQuery.Close;
     aSQLQuery.Free;
@@ -115,13 +141,22 @@ begin
   Result+=aTableBody;
 end;
 
-initialization
+function CreateSQLQuery(aStart, aLength: Integer; aOrderDir: TOrderDir; aOrderCol: Integer; aSearchValue: String
+  ): TSQLQuery;
+begin
+  Result := TSQLQuery.Create(nil);
+  OpenQuery(Result, aStart, aLength, aOrderDir, aOrderCol, aSearchValue);
+end;
+
+initialization                
+  _Ini:=TMemIniFile.Create(ChangeFileExt(ApplicationName, '.ini'));
   _Connection := CreateConnection;
   _Transaction:=TSQLTransaction.Create(nil);
   _Connection.Transaction:=_Transaction;
   _Connection.Open;
 
 finalization
+  _Ini.Free;
   _Connection.Close;
   _Transaction.Free;
   _Connection.Free;

@@ -111,7 +111,20 @@
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
-        <Filename Value="tableproducerajax.pas"/>
+        <Filename Value="build_table_ajax.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="emptytableproducer.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="EmptyTableProducer"/>
+      </Unit>
+      <Unit>
+        <Filename Value="staticfiles.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="cmn.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
     </Units>

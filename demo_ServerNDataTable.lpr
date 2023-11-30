@@ -4,7 +4,7 @@ program demo_ServerNDataTable;
 
 uses
   fpwebfile,
-  fphttpapp, TableProducer, getdatafromsql, LCLIntf
+  fphttpapp, EmptyTableProducer, build_table_ajax, staticfiles, TableProducer, getdatafromsql, LCLIntf, cmn
   ;
 
 begin
@@ -17,6 +17,7 @@ begin
   Application.Initialize;
   { This is optional. Just automatically launches by the URL you need }
   OpenURL('http://127.0.0.1:8081/tables.html');
+  OpenURL('http://127.0.0.1:8081/table-ajax.html');
   Application.Run;
 end.
 
