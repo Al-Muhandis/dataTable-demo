@@ -28,3 +28,10 @@ SearchCol=2
 # Frontend
 The template is used as a frontend framework `sb-admin` https://github.com/startbootstrap/startbootstrap-sb-admin/ 
  It can be used for that any other
+
+# demo video
+
+[![Watch the video](https://img.youtube.com/vi/RD104mPfl20/hqdefault.jpg)](https://www.youtube.com/embed/RD104mPfl20)
+
+[<img src="https://img.youtube.com/vi/RD104mPfl20/hqdefault.jpg" width="600" height="300"
+/>](https://www.youtube.com/embed/RD104mPfl20)
