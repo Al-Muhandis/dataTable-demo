@@ -1,5 +1,5 @@
 # dataTable-demo
-A simple almost minimal example of how you can work with a jQuery table from the Lazarus program. DataSource from firebird database
+A simple almost minimal example of how you can work with a jQuery table from the Lazarus program. DataSource is from firebird or SQLite3 database
 
 # demo.ini
 Just create `demo.ini` and write settings in it
@@ -8,20 +8,21 @@ Just create `demo.ini` and write settings in it
 ;; DB host, for example: localhost, 127.0.0.1, sample.com
 host=localhost
 ;; DB name. For TSQLConnection.DatabaseName
-name=C:\Users\user\Some_DB.fdb
+name=.\sample.sqlite3
 user=sysdba
 password=masterkey
+driver=SQLite3
 
 [Table]
-Name=TABLE_NAME
-col0=COL_0
-col1=COL_1
-col2=COL_2
-col3=COL_3
-col4=COL_4
-col5=COL_5
+Name=employee
+col0=id
+col1=Empid
+col2=EmpName
+col3=EmpJoiningDate
+col4=Salary
+col5=Address
 ColCount=6
-SearchCol=1
+SearchCol=2
 ```
 
 # Frontend

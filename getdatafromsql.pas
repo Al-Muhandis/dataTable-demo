@@ -20,23 +20,13 @@ function ReadColCount: Integer;
 implementation
 
 uses
-  IBConnection, IniFiles
+  IBConnection, IniFiles, SQLite3Conn
   ;
 
 var
-  _Connection : TIBConnection;
+  _Connection : TSQLConnection;
   _Transaction: TSQLTransaction;
   _Ini: TMemIniFile;
-
-function CreateConnection: TIBConnection;
-begin
-  result := TIBConnection.Create(nil);
-                                 { This I think you understand even better than me ;) }
-  result.Hostname :=      _Ini.ReadString('DB', 'Host', 'localhost');
-  result.DatabaseName :=  _Ini.ReadString('DB', 'Name', EmptyStr);
-  result.UserName :=      _Ini.ReadString('DB', 'User', 'sysdba');
-  result.Password :=      _Ini.ReadString('DB', 'Password', 'masterkey');
-end;
 
 { Read table params from INI file }
 function ReadColName(aIndex: Integer): String;
@@ -51,23 +41,46 @@ function ReadTableName: String;
 begin
   Result:=_Ini.ReadString('Table', 'Name', EmptyStr);
 end;
-
 { Read column inndex for searching if the search value is presented }
 function ReadSearchCol: Integer;
 begin
   Result:=_Ini.ReadInteger('Table', 'SearchCol', 0);
+end;
+function ReadDBDriver: String;
+begin
+  Result:=_Ini.ReadString('DB', 'Driver', 'IB');
+end;
+
+function CreateConnection: TSQLConnection;
+begin
+  case ReadDBDriver of
+    'IB':      Result := TIBConnection.Create(nil);
+    'SQLite3': Result := TSQLite3Connection.Create(nil);
+  else
+    raise ESQLDatabaseError.Create('Unsupported database driver');
+  end;
+                                 { This I think you understand even better than me ;) }
+  result.HostName :=      _Ini.ReadString('DB', 'Host', 'localhost');
+  result.DatabaseName :=  _Ini.ReadString('DB', 'Name', EmptyStr);
+  result.UserName :=      _Ini.ReadString('DB', 'User', 'sysdba');
+  result.Password :=      _Ini.ReadString('DB', 'Password', 'masterkey');
 end;
 
 function BuildQuery(aLength: Integer = 0; aStart: Integer = 0; aOrderDir: TOrderDir = odNone;
   aOrderCol: Integer = 0; aSearchValue: String = ''): String;
 var
   i, aCount: Integer;
+  aDBDriver: String;
 begin
+  aDBDriver:=ReadDBDriver;
   Result:='select ';
-  if aLength<>0 then
-    Result+='first '+(aLength+2).ToString+' ';
-  if aStart<>0 then
-    Result+='skip '+aStart.ToString+' ';
+  if aDBDriver='IB' then
+  begin
+    if aLength<>0 then
+      Result+='first '+(aLength+2).ToString+' ';
+    if aStart<>0 then
+      Result+='skip '+aStart.ToString+' ';
+  end;
   aCount:=ReadColCount;
   for i:=0 to aCount-1 do
     Result+=' '+ReadColName(i)+', ';
@@ -75,11 +88,16 @@ begin
     SetLength(Result, Length(Result)-Length(', '));
   Result+=' from '+ReadTableName;
   if not aSearchValue.IsEmpty then
-  begin
     Result+=' where '+ReadColName(ReadSearchCol)+' like ''%'+aSearchValue+'%''';
-  end;
   if aOrderDir<>odNone then
     Result+=' order by '+ReadColName(aOrderCol)+' '+OrderToStr(aOrderDir);
+  if aDBDriver='SQLite3' then
+  begin
+    if aLength<>0 then
+      Result+=' limit '+(aLength+2).ToString+' ';
+    if aStart<>0 then
+      Result+=' offset '+aStart.ToString+' ';
+  end;
 end;
 
 { Building an SQL query for the query and Open }
