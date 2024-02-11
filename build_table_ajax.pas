@@ -10,9 +10,9 @@ uses
 
 type
 
-  { TAjaxProducer }
+  { TAjaxProducerTable }
 
-  TAjaxProducer = class
+  TAjaxProducerTable = class
   private
     FDraw: Integer;
     FLength: LongInt;
@@ -26,19 +26,33 @@ type
     procedure ParseRequest(aRequest: TRequest);
   end;
 
+  { TAjaxProducerCellEdit }
+
+  TAjaxProducerCellEdit = class
+  private
+    FColumn: LongInt;
+    FID: LongInt;
+    FValue: String;
+  public
+    class procedure RouteDataTablePage(aRequest: TRequest; aResponse: TResponse); static;
+    procedure BuildResponse(aResponse: TResponse);
+    procedure SaveField(aID: Integer; aCol: Integer; const aValue: String);
+    procedure ParseRequest(aRequest: TRequest);
+  end;
+
 implementation
 
 uses
   fpjson, getdatafromsql, httproute
   ;
 
-{ TAjaxProducer }
+{ TAjaxProducerTable }
 { Procedures for processing the relevant request }
-class procedure TAjaxProducer.RouteDataTablePage(aRequest: TRequest; aResponse: TResponse);
+class procedure TAjaxProducerTable.RouteDataTablePage(aRequest: TRequest; aResponse: TResponse);
 var
-  aAjaxProducer: TAjaxProducer;
+  aAjaxProducer: TAjaxProducerTable;
 begin
-  aAjaxProducer:=TAjaxProducer.Create;
+  aAjaxProducer:=TAjaxProducerTable.Create;
   with aAjaxProducer do
   begin
     ParseRequest(aRequest);
@@ -49,7 +63,7 @@ end;
 
  { build JSON response for ajax request with certain structure
     https://datatables.net/manual/server-side }
-procedure TAjaxProducer.BuildResponse(aResponse: TResponse);
+procedure TAjaxProducerTable.BuildResponse(aResponse: TResponse);
 var
   aJSON: TJSONObject;
   aData, aRecord: TJSONArray;
@@ -90,7 +104,7 @@ begin
   end;
 end;
 
-procedure TAjaxProducer.ParseRequest(aRequest: TRequest);
+procedure TAjaxProducerTable.ParseRequest(aRequest: TRequest);
 var
   aDir: String;
 begin
@@ -111,9 +125,47 @@ begin
   end;
 end;
 
+{ TAjaxProducerCellEdit }
+
+class procedure TAjaxProducerCellEdit.RouteDataTablePage(aRequest: TRequest; aResponse: TResponse);
+var
+  aAjaxProducer: TAjaxProducerCellEdit;
+begin
+  aAjaxProducer:=TAjaxProducerCellEdit.Create;
+  with aAjaxProducer do
+  begin
+    ParseRequest(aRequest);
+    BuildResponse(aResponse);
+    Free;
+  end;
+end;
+
+procedure TAjaxProducerCellEdit.BuildResponse(aResponse: TResponse);
+begin
+  SaveField(FID, FColumn, FValue);
+  aResponse.Content:='OK';
+end;
+
+procedure TAjaxProducerCellEdit.SaveField(aID: Integer; aCol: Integer; const aValue: String);
+begin
+  SaveFieldToSQLQuery(aID, aCol, aValue);
+end;
+
+procedure TAjaxProducerCellEdit.ParseRequest(aRequest: TRequest);
+begin
+  { Ajax CellEdit framework (see js/dataTables.cellEdit.js) via
+    the myCallbackFunction function (see js/datatables-ajax.js) passes the request parameters via GET
+    parameters of the URI ( like sample.com/sampleuri ?getparameter1=value1&getparameter2 etc)
+    http://127.0.0.1/ajax.json/celledit?id=12&cellvalue=sample&... etc }
+  FID:=StrToIntDef(aRequest.ContentFields.Values['id'], 0);
+  FValue:=aRequest.ContentFields.Values['cellvalue'];
+  FColumn:=StrToIntDef(aRequest.ContentFields.Values['column'], 0);
+end;
+
 initialization
-  { register address for a url routing }
-  httprouter.RegisterRoute('/ajax.json/', @TAjaxProducer.RouteDataTablePage);
+  { register address for a url routing }        
+  httprouter.RegisterRoute('/ajax.json/celledit/', TRouteMethod.rmPost, @TAjaxProducerCellEdit.RouteDataTablePage);
+  httprouter.RegisterRoute('/ajax.json/tableread/', @TAjaxProducerTable.RouteDataTablePage);
 
 end.
 

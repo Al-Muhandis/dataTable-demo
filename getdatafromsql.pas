@@ -16,6 +16,7 @@ function GetDataFromSQLTable(aWithBody: Boolean = True): String;
 function CreateSQLQuery(aLength, aStart: Integer; aOrderDir: TOrderDir = odNone; aOrderCol: Integer = 0;
   aSearchValue: String = ''): TSQLQuery;
 function ReadColCount: Integer;
+procedure SaveFieldToSQLQuery(aID: Integer; aCol: Integer; const aValue: String);
 
 implementation
 
@@ -37,6 +38,7 @@ function ReadColCount: Integer;
 begin
   Result:=_Ini.ReadInteger('Table', 'ColCount', 0);
 end;
+
 function ReadTableName: String;
 begin
   Result:=_Ini.ReadString('Table', 'Name', EmptyStr);
@@ -108,6 +110,29 @@ begin
   aQuery.SQL.Text := BuildQuery(aLength, aStart, aOrderDir, aOrderCol, aSearchValue);
   aQuery.Open;
   aQuery.First;
+end;
+
+procedure SaveFieldQuery(aQuery: TSQLQuery; aID: Integer; aCol: Integer; const aValue: String);
+begin
+  OpenQuery(aQuery);
+  if not aQuery.Locate('id', aID{%H-}, []) then
+    Exit;
+  aQuery.Edit;
+  aQuery.Fields[aCol].AsString:=aValue;
+  aQuery.Post;
+end;
+
+procedure SaveFieldToSQLQuery(aID: Integer; aCol: Integer; const aValue: String);
+var
+  aQuery: TSQLQuery;
+begin
+  aQuery := TSQLQuery.Create(nil);
+  aQuery.Options:=aQuery.Options+[sqoAutoApplyUpdates, sqoAutoCommit];
+  try
+    SaveFieldQuery(aQuery, aID, aCol, aValue);
+  finally                                     
+    aQuery.Free;
+  end;
 end;
 
 { for ajax data retrieving we need only table header in HTML }

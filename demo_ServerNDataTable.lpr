@@ -4,8 +4,7 @@ program demo_ServerNDataTable;
 
 uses
   fpwebfile,
-  fphttpapp, EmptyTableProducer, build_table_ajax, staticfiles, TableProducer, getdatafromsql, LCLIntf, cmn
-  ;
+  fphttpapp, EmptyTableProducer, build_table_ajax, staticfiles, TableProducer, getdatafromsql, LCLIntf, cmn;
 
 begin
 
