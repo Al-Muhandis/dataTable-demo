@@ -26,7 +26,8 @@ SearchCol=2
 ```
 
 # Frontend
-The template is used as a frontend framework `sb-admin` https://github.com/startbootstrap/startbootstrap-sb-admin/ 
+The template is used as a frontend framework `sb-admin` https://github.com/startbootstrap/startbootstrap-sb-admin/
+The JS frameworks: jQuery, dataTables https://datatables.net, celledit https://github.com/ejbeaty/CellEdit 
  It can be used for that any other
 
 # demo video
